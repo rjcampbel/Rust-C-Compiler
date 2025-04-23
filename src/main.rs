@@ -1,5 +1,6 @@
 use clap::{builder::ArgPredicate, Args, Parser};
-use std::process::ExitCode;
+use std::process;
+use std::fs;
 
 /// Simple program to greet a person
 #[derive(Parser,Debug)]
@@ -29,10 +30,15 @@ struct Command
     run_lexer: bool,
 }
 
-fn main() -> ExitCode {
+fn main() {
     let args: Cli = Cli::parse();
 
     println!("Args {:?}", args);
 
-    return 0.into();
+    let contents = fs::read_to_string(&args.file).unwrap_or_else(|err|{
+        println!("Failed to open \"{0}\": {err}", args.file);
+        process::exit(1);
+    });
+
+    println!("{contents}");
 }
