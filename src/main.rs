@@ -1,37 +1,32 @@
-use clap::{builder::ArgPredicate, Args, Parser};
+mod cli;
+
+use cli::Cli;
 use std::process;
 use std::fs;
 
-/// Simple program to greet a person
-#[derive(Parser,Debug)]
-#[command(version, about, long_about = None)]
-struct Cli {
-    /// Source file to compile
-    file: String,
+use nom::{
+    IResult,
+    Parser,
+    branch::alt,
+    character::complete::{alpha1,alphanumeric1},
+    bytes::complete::tag,
+    multi::many0_count,
+    sequence::pair,
+    combinator::recognize
+  };
 
-    #[command(flatten)]
-    command: Command,
-}
 
-#[derive(Args,Debug)]
-#[group(required = false, multiple = false)]
-struct Command
-{
-    /// Run the the lexer, parser, and codegen
-    #[arg(id = "codegen", short, long, default_value_t = true, default_value_ifs([("lex", ArgPredicate::IsPresent, Some("false")), ("parse", ArgPredicate::IsPresent, Some("false"))]))]
-    run_codegen: bool,
-
-    /// Run the lexer and the parser
-    #[arg(id = "parse", short, long, default_value_t = true, default_value_if("lex", ArgPredicate::IsPresent, Some("false")))]
-    run_parser: bool,
-
-    /// Run the lexer
-    #[arg(id = "lex", short, long, default_value_t = true, conflicts_with_all(["parse", "codegen"]))]
-    run_lexer: bool,
+pub fn identifier(input: &str) -> IResult<&str, &str> {
+    recognize(
+        pair(
+            alt((alpha1, tag("_"))),
+            many0_count(alt((alphanumeric1, tag("_"))))
+        )
+    ).parse(input)
 }
 
 fn main() {
-    let args: Cli = Cli::parse();
+    let args: Cli = Cli::do_parse();
 
     println!("Args {:?}", args);
 
@@ -41,4 +36,21 @@ fn main() {
     });
 
     println!("{contents}");
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::identifier;
+    use nom::error::{Error, ErrorKind};
+    use nom::Err;
+
+    #[test]
+    fn first_test() {
+        assert_eq!(identifier("_input"), Ok(("", "_input")));
+        assert_eq!(identifier("hello_input"), Ok(("", "hello_input")));
+        assert_eq!(identifier("123_input"), Err(Err::Error(Error::new("123_input", ErrorKind::Tag))));
+        assert_eq!(identifier("input123___foobar"), Ok(("", "input123___foobar")));
+        assert_eq!(identifier("___"), Ok(("", "___")));
+        assert_eq!(identifier("__;f647"), Ok((";f647", "__")));
+    }
 }

@@ -6,3 +6,4 @@ authors = ["Ryan Campbell <ryan.campbell4@gmail.com"]
 
 [dependencies]
 clap = { version = "4.5.37", features = ["derive"] }
+nom = "8.0.0"
