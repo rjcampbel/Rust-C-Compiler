@@ -1,29 +1,9 @@
 mod cli;
+mod identifier;
 
 use cli::Cli;
 use std::process;
 use std::fs;
-
-use nom::{
-    IResult,
-    Parser,
-    branch::alt,
-    character::complete::{alpha1,alphanumeric1},
-    bytes::complete::tag,
-    multi::many0_count,
-    sequence::pair,
-    combinator::recognize
-  };
-
-
-pub fn identifier(input: &str) -> IResult<&str, &str> {
-    recognize(
-        pair(
-            alt((alpha1, tag("_"))),
-            many0_count(alt((alphanumeric1, tag("_"))))
-        )
-    ).parse(input)
-}
 
 fn main() {
     let args: Cli = Cli::do_parse();
@@ -36,21 +16,4 @@ fn main() {
     });
 
     println!("{contents}");
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::identifier;
-    use nom::error::{Error, ErrorKind};
-    use nom::Err;
-
-    #[test]
-    fn first_test() {
-        assert_eq!(identifier("_input"), Ok(("", "_input")));
-        assert_eq!(identifier("hello_input"), Ok(("", "hello_input")));
-        assert_eq!(identifier("123_input"), Err(Err::Error(Error::new("123_input", ErrorKind::Tag))));
-        assert_eq!(identifier("input123___foobar"), Ok(("", "input123___foobar")));
-        assert_eq!(identifier("___"), Ok(("", "___")));
-        assert_eq!(identifier("__;f647"), Ok((";f647", "__")));
-    }
 }
