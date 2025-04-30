@@ -22,11 +22,10 @@ fn main() {
             ';' => println!("found a semicolon"),
             '{' => println!("found an open brace"),
             '}' => println!("found a close brace"),
-            _ if c.is_alphabetic() => println!("found a character"),
+            _ if c.is_alphabetic() => println!("found a character: {c}"),
             _ if c.is_whitespace() => println!("found whitespace"),
-            _ if c.is_ascii_digit() => println!("found a digit"),
+            _ if c.is_ascii_digit() => println!("found a digit: {c}"),
             _ => println!("invalid character")
         }
     }
-    println!("{contents}");
 }
