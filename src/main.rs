@@ -1,5 +1,4 @@
 mod cli;
-mod identifier;
 
 use cli::Cli;
 use std::process;
@@ -15,5 +14,19 @@ fn main() {
         process::exit(1);
     });
 
+    let mut chars = contents.chars();
+    while let Some(c) = chars.next() {
+        match c {
+            '(' => println!("found an open paren"),
+            ')' => println!("found a close paren"),
+            ';' => println!("found a semicolon"),
+            '{' => println!("found an open brace"),
+            '}' => println!("found a close brace"),
+            _ if c.is_alphabetic() => println!("found a character"),
+            _ if c.is_whitespace() => println!("found whitespace"),
+            _ if c.is_ascii_digit() => println!("found a digit"),
+            _ => println!("invalid character")
+        }
+    }
     println!("{contents}");
 }
