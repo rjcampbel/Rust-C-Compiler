@@ -9,7 +9,7 @@ pub struct Preprocessor {
 
 impl Drop for Preprocessor {
    fn drop(&mut self) {
-      let _ = std::fs::remove_file(&self.pp_filename);
+      _ = std::fs::remove_file(&self.pp_filename);
    }
 }
 

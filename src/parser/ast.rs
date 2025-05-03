@@ -1,4 +1,4 @@
-enum Program {
+pub enum Program {
    Program(FuncDef),
 }
 
