@@ -1,4 +1,8 @@
-use clap::{builder::ArgPredicate, Args, Parser};
+use clap::{
+    Args,
+    builder::ArgPredicate,
+    Parser
+};
 
 #[derive(Parser,Debug)]
 #[command(version, about, long_about = None)]
