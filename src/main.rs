@@ -1,4 +1,6 @@
 mod cli;
+mod ast;
+
 
 use cli::Cli;
 use std::process;
@@ -26,12 +28,12 @@ fn main() {
 
     let output_filename = args.file.replace(".c", "_pp.c");
     let _ = Command::new("gcc")
-    .arg("-E")
-    .arg("-P")
-    .arg(&args.file)
-    .arg("-o")
-    .arg(&output_filename)
-    .output();
+        .arg("-E")
+        .arg("-P")
+        .arg(&args.file)
+        .arg("-o")
+        .arg(&output_filename)
+        .output();
 
     let contents = fs::read_to_string(&output_filename).unwrap_or_else(|err|{
         println!("Failed to open \"{0}\": {err}", args.file);
