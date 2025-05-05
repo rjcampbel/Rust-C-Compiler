@@ -1,4 +1,4 @@
-mod ast;
+pub mod ast;
 
 use crate::lexer::token::Token;
 use ast::Program;

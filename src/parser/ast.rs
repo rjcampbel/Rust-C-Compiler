@@ -6,10 +6,11 @@ pub enum Program {
 
 impl Program {
    pub fn pretty_print(&self) {
-      println!("Program");
+      println!("Program(");
       match self {
-         Self::Program(f) => f.pretty_print(),
+         Self::Program(f) => f.pretty_print(1),
       }
+      println!(")")
    }
 
    pub fn parse(tokens: &Vec<Token>) -> Result<Self, String> {
@@ -33,11 +34,15 @@ pub enum FuncDef {
 }
 
 impl FuncDef {
-   pub fn pretty_print(&self) {
+   pub fn pretty_print(&self, indent_level: usize) {
       match self {
          Self::Function(f) => {
-            println!("Function name = {}", f.name);
-            f.stmt.pretty_print();
+            println!("{:indent$}Function(", "", indent=indent_level*3);
+            println!("{:indent$}name=\"{name}\"", "", indent=indent_level*6, name=f.name);
+            println!("{:indent$}body=(", "", indent=indent_level*6);
+            f.stmt.pretty_print(indent_level+2);
+            println!("{:indent$})", "", indent=indent_level*6);
+            println!("{:indent$})", "", indent=indent_level*3);
          }
       }
    }
@@ -54,7 +59,7 @@ impl FuncDef {
          return Err(String::from("Syntax Error: expected an int"));
       }
 
-      let mut func_name = String::new();
+      let func_name: String;
       if let Some(token) = token_stream.next() {
          match token {
             Token::Identifier(name) => func_name = name.to_string(),
@@ -132,11 +137,12 @@ pub enum Stmt {
 }
 
 impl Stmt {
-   pub fn pretty_print(&self) {
+   pub fn pretty_print(&self, indent_level: usize) {
       match self {
          Self::Return(e) => {
-            println!("Return");
-            e.pretty_print();
+            println!("{:indent$}Return(", "", indent=indent_level*3);
+            e.pretty_print(indent_level+1);
+            println!("{:indent$})", "", indent=indent_level*3);
          }
       }
    }
@@ -164,7 +170,7 @@ impl Stmt {
       } else {
          return Err(String::from("Syntax Error: expected a semicolon"));
       }
-      // expect semicolon
+
       Ok(Stmt::Return(parse_result))
    }
 }
@@ -174,19 +180,20 @@ pub enum Expr {
 }
 
 impl Expr {
-   pub fn pretty_print(&self) {
+   pub fn pretty_print(&self, indent_level: usize) {
       match self {
          Self::Const(c) => {
-            println!("Constant: {}", c);
+            println!("{:indent$}Constant({c})", "", indent=indent_level*3, c=c);
          }
       }
    }
 
    pub fn parse<'a>(token_stream: &mut impl Iterator<Item=&'a Token>) -> Result<Self, String> {
-      let mut value: u64 = 0;
       if let Some(token) = token_stream.next() {
          match token {
-            Token::Integer(i) => value = *i,
+            Token::Integer(i) => {
+               return Ok(Expr::Const(*i))
+            }
             _ => {
                return Err(String::from("Syntax Error: expected an integer"));
             }
@@ -195,6 +202,5 @@ impl Expr {
          return Err(String::from("Syntax Error: expected an integer"));
       }
 
-      Ok(Expr::Const(value))
    }
 }
