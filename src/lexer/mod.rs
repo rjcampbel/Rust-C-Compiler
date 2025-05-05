@@ -52,9 +52,8 @@ impl Lexer {
                   if t.is_alphabetic() {
                      return Err(String::from("Invalid identifier"));
                   }
-               } else {
-                  tokens.push(Token::Integer(token_value.parse::<u64>().unwrap()));
                }
+               tokens.push(Token::Integer(token_value.parse::<u64>().unwrap()));
             },
             _ if c.is_whitespace() => (),
             _ => {
