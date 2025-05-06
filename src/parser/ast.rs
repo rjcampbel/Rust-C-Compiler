@@ -1,5 +1,37 @@
 use crate::lexer::token::Token;
 
+#[macro_export]
+macro_rules! expect_token {
+   ($actual_token:expr, $expected_token:path, $msg:literal) => {
+      if let Some(token) = $actual_token {
+         match token {
+            $expected_token => (),
+            _ => {
+               return Err(String::from($msg));
+            }
+         }
+      } else {
+         return Err(String::from($msg));
+      }
+   };
+}
+
+macro_rules! expect_assign_token {
+   ($actual_token:expr, $expected_token:path, $var_name:ident, $type:ty, $msg:literal) => {
+      let $var_name: $type;
+      if let Some(token) = $actual_token {
+         match token {
+            $expected_token(value) => $var_name = value.clone(),
+            _ => {
+               return Err(String::from($msg));
+            }
+         }
+      } else {
+         return Err(String::from($msg));
+      }
+   };
+}
+
 pub enum Program {
    Program(FuncDef),
 }
@@ -48,87 +80,16 @@ impl FuncDef {
    }
 
    pub fn parse<'a>(token_stream: &mut impl Iterator<Item=&'a Token>) -> Result<Self, String> {
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::Int => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected int"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected an int"));
-      }
+      expect_token!(token_stream.next(), Token::Int, "Syntax Error: expected an int");
+      expect_assign_token!(token_stream.next(), Token::Identifier, func_name, String, "Syntax Error");
+      expect_token!(token_stream.next(), Token::OpenParen, "Syntax Error: expected open paren");
+      expect_token!(token_stream.next(), Token::Void, "Syntax Error: expected void");
+      expect_token!(token_stream.next(), Token::CloseParen, "Syntax Error: expected closing paren");
+      expect_token!(token_stream.next(), Token::OpenBrace, "Syntax Error: expected open brace");
+      let statement: Stmt = Stmt::parse(token_stream)?;
+      expect_token!(token_stream.next(), Token::CloseBrace, "Syntax Error: expected closing brace");
 
-      let func_name: String;
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::Identifier(name) => func_name = name.to_string(),
-            _ => {
-               return Err(String::from("Syntax Error: expected identifier"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected an identifier"));
-      }
-
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::OpenParen => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected open paren"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected an open paren"));
-      }
-
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::Void => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected void"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected void"));
-      }
-
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::CloseParen => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected closing paren"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected a closing paren"));
-      }
-
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::OpenBrace => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected open brace"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected an open brace"));
-      }
-
-      let parse_result: Stmt = Stmt::parse(token_stream)?;
-
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::CloseBrace => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected closing brace"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected a closing brace"));
-      }
-
-      Ok(FuncDef::Function( Function { name: func_name, stmt: parse_result } ))
+      Ok(FuncDef::Function( Function { name: func_name, stmt: statement } ))
    }
 }
 
@@ -148,30 +109,11 @@ impl Stmt {
    }
 
    pub fn parse<'a>(token_stream: &mut impl Iterator<Item=&'a Token>) -> Result<Self, String> {
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::Return => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected a return"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected a return"));
-      }
+      expect_token!(token_stream.next(), Token::Return, "Syntax Error: expected return");
+      let expression = Expr::parse(token_stream)?;
+      expect_token!(token_stream.next(), Token::Semicolon, "Syntax Error: expected a semicolon");
 
-      let parse_result = Expr::parse(token_stream)?;
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::Semicolon => (),
-            _ => {
-               return Err(String::from("Syntax Error: expected a semicolon"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected a semicolon"));
-      }
-
-      Ok(Stmt::Return(parse_result))
+      Ok(Stmt::Return(expression))
    }
 }
 
@@ -189,18 +131,8 @@ impl Expr {
    }
 
    pub fn parse<'a>(token_stream: &mut impl Iterator<Item=&'a Token>) -> Result<Self, String> {
-      if let Some(token) = token_stream.next() {
-         match token {
-            Token::Integer(i) => {
-               return Ok(Expr::Const(*i))
-            }
-            _ => {
-               return Err(String::from("Syntax Error: expected an integer"));
-            }
-         }
-      } else {
-         return Err(String::from("Syntax Error: expected an integer"));
-      }
+      expect_assign_token!(token_stream.next(), Token::Integer, number, u64, "Syntax Error: expected an integer");
 
+      Ok(Expr::Const(number))
    }
 }
