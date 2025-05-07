@@ -14,7 +14,7 @@ impl Drop for Preprocessor {
 }
 
 impl Preprocessor {
-   pub fn new(source_filename_: String) -> Self {
+   pub fn new(source_filename_: &String) -> Self {
       Self {
          source_filename: source_filename_.clone(),
          pp_filename: source_filename_.replace(".c", "_pp.c")

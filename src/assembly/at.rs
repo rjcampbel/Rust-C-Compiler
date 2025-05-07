@@ -1,4 +1,6 @@
-use std::fmt::Write;
+use std::fs;
+use std::io::Write;
+
 use crate::parser::ast;
 
 pub enum Program {
@@ -26,7 +28,7 @@ impl Program {
       Ok(Program::Program(function_def))
    }
 
-   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+   pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          Program::Program(p) => {
             p.write(text)?;
@@ -57,7 +59,7 @@ impl Function {
       }
    }
 
-   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+   pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       writeln!(text, "   .globl _{}", self.name)?;
       writeln!(text, "_{}:", self.name)?;
       for instr in &self.instrs {
@@ -107,7 +109,7 @@ impl FuncDef {
       Ok(FuncDef::Function(at_func))
    }
 
-   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+   pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          FuncDef::Function(f) => {
             f.write(text)?;
@@ -151,7 +153,7 @@ impl Inst {
       }
    }
 
-   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+   pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          Inst::Mov(m) => {
             write!(text, "   movl ")?;
@@ -185,7 +187,7 @@ impl Operand {
       }
    }
 
-   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+   pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          Operand::Imm(v) => {
             write!(text, "${}", v)?;

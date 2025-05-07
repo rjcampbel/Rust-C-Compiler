@@ -1,3 +1,4 @@
+mod assembler;
 mod assembly;
 mod cli;
 mod lexer;
@@ -5,6 +6,7 @@ mod preprocessor;
 mod parser;
 
 use cli::Cli;
+use assembler::Assembler;
 use assembly::AssemblyGen;
 use assembly::at;
 use lexer::Lexer;
@@ -12,11 +14,12 @@ use parser::Parser;
 use parser::ast::Program;
 use preprocessor::Preprocessor;
 use std::error::Error;
+use std::fs::File;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Cli::do_parse();
 
-    let pp_contents = Preprocessor::new(args.file).process()?;
+    let pp_contents = Preprocessor::new(&args.file).process()?;
 
     if args.command.run_lexer {
         let tokens = Lexer::new(pp_contents).lex()?;
@@ -34,9 +37,13 @@ fn main() -> Result<(), Box<dyn Error>> {
                 at_program = AssemblyGen::new(program).parse()?;
                 at_program.pretty_print();
 
-                let mut code = String::new();
+                let path: String = args.file.replace(".c", ".s");
+                let mut code = File::create(&path)?;
                 at_program.write(&mut code)?;
-                println!("{}", code);
+
+                if args.command.run_assembler {
+                    Assembler::new(&path).process()?;
+                }
             }
         }
     }

@@ -24,6 +24,10 @@ impl Cli {
 #[group(required = false, multiple = false)]
 pub struct Command
 {
+    /// Run the lexer, parser, codegen, and assembler
+    #[arg(id= "assemble", short, long, default_value_t = true, default_value_ifs([("lex", ArgPredicate::IsPresent, Some("false")), ("parse", ArgPredicate::IsPresent, Some("false")), ("codegen", ArgPredicate::IsPresent, Some("false"))]))]
+    pub run_assembler: bool,
+
     /// Run the the lexer, parser, and codegen
     #[arg(id = "codegen", short, long, default_value_t = true, default_value_ifs([("lex", ArgPredicate::IsPresent, Some("false")), ("parse", ArgPredicate::IsPresent, Some("false"))]))]
     pub run_codegen: bool,
