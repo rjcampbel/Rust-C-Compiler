@@ -1,6 +1,5 @@
 use crate::lexer::token::Token;
 
-#[macro_export]
 macro_rules! expect_token {
    ($actual_token:expr, $expected_token:path, $msg:literal) => {
       if let Some(token) = $actual_token {
@@ -57,8 +56,8 @@ impl Program {
 }
 
 pub struct Function {
-   name: String,
-   stmt: Stmt,
+   pub name: String,
+   pub stmt: Stmt,
 }
 
 pub enum FuncDef {
