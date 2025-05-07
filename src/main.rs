@@ -33,6 +33,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             if args.command.run_codegen {
                 at_program = AssemblyGen::new(program).parse()?;
                 at_program.pretty_print();
+
+                let mut code = String::new();
+                at_program.write(&mut code)?;
+                println!("{}", code);
             }
         }
     }

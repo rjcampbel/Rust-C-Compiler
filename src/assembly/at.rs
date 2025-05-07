@@ -1,3 +1,4 @@
+use std::fmt::Write;
 use crate::parser::ast;
 
 pub enum Program {
@@ -24,6 +25,15 @@ impl Program {
       }
       Ok(Program::Program(function_def))
    }
+
+   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+      match self {
+         Program::Program(p) => {
+            p.write(text)?;
+         }
+      }
+      Ok(())
+   }
 }
 
 pub struct Function {
@@ -45,6 +55,15 @@ impl Function {
       for instr in &self.instrs {
          instr.pretty_print(indent_level+1);
       }
+   }
+
+   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+      writeln!(text, "   .globl _{}", self.name)?;
+      writeln!(text, "_{}:", self.name)?;
+      for instr in &self.instrs {
+         instr.write(text)?;
+      };
+      Ok(())
    }
 
    pub fn parse(function: &ast::Function) -> Result<Self, String> {
@@ -87,6 +106,15 @@ impl FuncDef {
       }
       Ok(FuncDef::Function(at_func))
    }
+
+   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+      match self {
+         FuncDef::Function(f) => {
+            f.write(text)?;
+         }
+      }
+      Ok(())
+   }
 }
 
 pub struct Mov {
@@ -122,6 +150,22 @@ impl Inst {
          }
       }
    }
+
+   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+      match self {
+         Inst::Mov(m) => {
+            write!(text, "   movl ")?;
+            m.src.write(text)?;
+            write!(text, ", ")?;
+            m.dst.write(text)?;
+            writeln!(text)?
+         },
+         Inst::Ret => {
+            writeln!(text, "   ret")?;
+         }
+      }
+      Ok(())
+   }
 }
 
 pub enum Operand {
@@ -139,5 +183,18 @@ impl Operand {
             println!("{:indent$}Register", "", indent=indent_level*3);
          }
       }
+   }
+
+   pub fn write(&self, text: &mut String) -> std::fmt::Result {
+      match self {
+         Operand::Imm(v) => {
+            write!(text, "${}", v)?;
+         },
+         Operand::Register => {
+            write!(text, "%eax")?;
+         }
+      }
+
+      Ok(())
    }
 }
