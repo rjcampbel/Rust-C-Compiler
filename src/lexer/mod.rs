@@ -25,10 +25,9 @@ impl Lexer {
             '}' => tokens.push(Token::CloseBrace),
             '~' => tokens.push(Token::BitFlip),
             '-' => {
-               if let Some(c) = chars.peek() {
-                  if *c == '-' {
-                     tokens.push(Token::Decrement);
-                  }
+               if matches!(chars.peek(), Some('-')) {
+                  chars.next();
+                  tokens.push(Token::Decrement);
                } else {
                   tokens.push(Token::Negate);
                }
