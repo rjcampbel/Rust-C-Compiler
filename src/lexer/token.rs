@@ -10,4 +10,7 @@ pub enum Token {
     Return,
     Integer(u64),
     Identifier(String),
+    Negate,
+    BitFlip,
+    Decrement,
 }

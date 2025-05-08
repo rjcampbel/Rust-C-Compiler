@@ -23,6 +23,16 @@ impl Lexer {
             ';' => tokens.push(Token::Semicolon),
             '{' => tokens.push(Token::OpenBrace),
             '}' => tokens.push(Token::CloseBrace),
+            '~' => tokens.push(Token::BitFlip),
+            '-' => {
+               if let Some(c) = chars.peek() {
+                  if *c == '-' {
+                     tokens.push(Token::Decrement);
+                  }
+               } else {
+                  tokens.push(Token::Negate);
+               }
+            }
             _ if c.is_alphabetic() || c == '_' => {
                let mut token_value: String = String::from(c);
                while let Some(t) = chars.peek() {
