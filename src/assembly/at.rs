@@ -77,6 +77,12 @@ impl Function {
                ast::Expr::Const(c) => {
                   at_func.instrs.push(Inst::Mov(Mov{src:Operand::Imm(*c), dst:Operand::Register}));
                   at_func.instrs.push(Inst::Ret);
+               },
+               ast::Expr::Unary(op ) => {
+
+               },
+               ast::Expr::Expr(expr) => {
+
                }
             }
          }

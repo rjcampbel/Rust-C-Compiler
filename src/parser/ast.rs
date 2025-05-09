@@ -116,8 +116,32 @@ impl Stmt {
    }
 }
 
+pub enum UnaryOp {
+   Complement(Expr),
+   Negate(Expr),
+}
+
+impl UnaryOp {
+   pub fn pretty_print(&self, indent_level: usize) {
+      match self {
+         Self::Complement(e) => {
+            println!("{:indent$}Complement(", "", indent=indent_level*3);
+            e.pretty_print(indent_level+1);
+            println!("{:indent$})", "", indent=indent_level*3);
+         },
+         Self::Negate(e) => {
+            println!("{:indent$}Negate(", "", indent=indent_level*3);
+            e.pretty_print(indent_level+1);
+            println!("{:indent$})", "", indent=indent_level*3);
+         }
+      }
+   }
+}
+
 pub enum Expr {
-   Const(u64)
+   Const(u64),
+   Unary(Box<UnaryOp>),
+   Expr(Box<Expr>)
 }
 
 impl Expr {
@@ -125,13 +149,37 @@ impl Expr {
       match self {
          Self::Const(c) => {
             println!("{:indent$}Constant({c})", "", indent=indent_level*3, c=c);
+         },
+         Self::Unary(op) => {
+            op.pretty_print(indent_level);
+         },
+         Self::Expr(expr) => {
+            expr.pretty_print(indent_level);
          }
       }
    }
 
    pub fn parse<'a>(token_stream: &mut impl Iterator<Item=&'a Token>) -> Result<Self, String> {
-      expect_assign_token!(token_stream.next(), Token::Integer, number, u64, "Syntax Error: expected an integer");
-
-      Ok(Expr::Const(number))
+      match token_stream.next() {
+         Some(Token::Integer(v)) => {
+            Ok(Expr::Const(*v))
+         },
+         Some(Token::BitFlip) => {
+            let expr = Expr::parse(token_stream)?;
+            Ok(Expr::Unary(Box::new(UnaryOp::Complement(expr))))
+         },
+         Some(Token::Negate) => {
+            let expr = Expr::parse(token_stream)?;
+            Ok(Expr::Unary(Box::new(UnaryOp::Complement(expr))))
+         }
+         Some(Token::OpenParen) => {
+            let expr = Expr::parse(token_stream)?;
+            expect_token!(token_stream.next(), Token::CloseParen, "Syntax Error: expected closing paren after expression");
+            Ok(Expr::Expr(Box::new(expr)))
+         },
+         _ => {
+            Err(String::from("Syntax Error: Invalid Expression"))
+         }
+      }
    }
 }
