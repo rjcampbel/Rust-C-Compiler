@@ -4,6 +4,7 @@ mod cli;
 mod lexer;
 mod preprocessor;
 mod parser;
+mod tacky;
 
 use cli::Cli;
 use assembler::Assembler;
@@ -15,6 +16,7 @@ use parser::ast::Program;
 use preprocessor::Preprocessor;
 use std::error::Error;
 use std::fs::File;
+use tacky::tacky_ast;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args = Cli::do_parse();
@@ -32,8 +34,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             program = Parser::new(tokens).parse()?;
             program.pretty_print();
 
-            let at_program: at::Program;
+            if args.command.run_tacky {
+                let tacky_program = tacky_ast::Program::parse(&program)?;
+                tacky_program.pretty_print();
+            }
             if args.command.run_codegen {
+                let at_program: at::Program;
                 at_program = AssemblyGen::new(program).parse()?;
                 at_program.pretty_print();
 
