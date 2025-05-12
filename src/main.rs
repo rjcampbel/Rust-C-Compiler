@@ -40,11 +40,10 @@ fn main() -> Result<(), Box<dyn Error>> {
                     at_program = AssemblyGen::new(tacky_program).parse()?;
                     at_program.pretty_print();
 
-                    let path: String = args.file.replace(".c", ".s");
-                    let mut code = File::create(&path)?;
-                    at_program.write(&mut code)?;
-
                     if args.command.run_assembler {
+                        let path: String = args.file.replace(".c", ".s");
+                        let mut code = File::create(&path)?;
+                        at_program.write(&mut code)?;
                         Assembler::new(&path).process()?;
                     }
                 }

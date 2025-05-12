@@ -36,6 +36,14 @@ impl Program {
       }
    }
 
+   pub fn register_fixup(&mut self) {
+      match self {
+         Program::Program(f) => {
+            f.register_fixup();
+         }
+      }
+   }
+
    pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          Program::Program(p) => {
@@ -154,6 +162,30 @@ impl Function {
          }
       }
    }
+
+   pub fn register_fixup(&mut self) {
+      self.instrs.insert(0, Inst::AllocStack(self.stack_allocator.get()));
+
+      let mut index: usize = 0;
+      while index < self.instrs.len() {
+         match &self.instrs[index] {
+            Inst::Mov(m) => {
+               match (&m.src, &m.dst) {
+                  (Operand::Stack(_), Operand::Stack(_)) => {
+                     let new_instr1 = Inst::Mov(Mov { src: m.src.clone(), dst: Operand::Register(Reg::R10) });
+                     let new_instr2 = Inst::Mov(Mov { src: Operand::Register(Reg::R10), dst: m.dst.clone() });
+                     self.instrs.remove(index);
+                     self.instrs.insert(index, new_instr1);
+                     self.instrs.insert(index+1, new_instr2);
+                     index += 2;
+                  },
+                  _ => index += 1
+               }
+            },
+            _ => index += 1
+         }
+      }
+   }
 }
 
 pub enum FuncDef {
@@ -187,6 +219,13 @@ impl FuncDef {
       }
    }
 
+   pub fn register_fixup(&mut self) {
+      match self {
+         FuncDef::Function(f) => {
+            f.register_fixup();
+         }
+      }
+   }
    pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          FuncDef::Function(f) => {
@@ -216,7 +255,7 @@ impl Mov {
 pub enum Inst {
    Mov(Mov),
    Unary(UnaryOp, Operand),
-   AllocStack(u64),
+   AllocStack(i64),
    Ret
 }
 

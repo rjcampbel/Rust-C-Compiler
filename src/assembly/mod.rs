@@ -18,6 +18,7 @@ impl AssemblyGen {
    pub fn parse(&mut self) -> Result<Program, String> {
       let mut program = Program::parse(&self.program)?;
       program.replace_pseudoregs();
+      program.register_fixup();
       Ok(program)
    }
 }
