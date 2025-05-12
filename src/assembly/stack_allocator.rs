@@ -19,4 +19,8 @@ impl StackAllocator {
          self.offset
       })
    }
+
+   pub fn get(&self) -> i64 {
+      self.offset
+   }
 }
