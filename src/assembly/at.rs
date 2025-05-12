@@ -78,8 +78,10 @@ impl Function {
    }
 
    pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
-      writeln!(text, "   .globl _{}", self.name)?;
+      writeln!(text, "\t.globl _{}", self.name)?;
       writeln!(text, "_{}:", self.name)?;
+      writeln!(text, "\tpushq\t%rbp")?;
+      writeln!(text, "\tmovq\t%rsp, %rbp")?;
       for instr in &self.instrs {
          instr.write(text)?;
       };
@@ -226,6 +228,7 @@ impl FuncDef {
          }
       }
    }
+
    pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          FuncDef::Function(f) => {
@@ -285,16 +288,25 @@ impl Inst {
    pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          Inst::Mov(m) => {
-            write!(text, "   movl ")?;
+            write!(text, "\tmovl\t")?;
             m.src.write(text)?;
             write!(text, ", ")?;
             m.dst.write(text)?;
             writeln!(text)?
          },
          Inst::Ret => {
-            writeln!(text, "   ret")?;
+            writeln!(text, "\tmovq\t%rbp, %rsp")?;
+            writeln!(text, "\tpopq\t%rbp")?;
+            writeln!(text, "\tret")?;
          },
-         _ => ()
+         Inst::AllocStack(a) => {
+            writeln!(text, "\tsubq\t${}, %rsp", a)?;
+         },
+         Inst::Unary(op, operand ) => {
+            op.write(text)?;
+            operand.write(text)?;
+            writeln!(text, "")?;
+         }
       }
       Ok(())
    }
@@ -312,6 +324,13 @@ impl UnaryOp {
          Self::Negate => "Negate"
       };
       println!("{:indent$}{name}", "", indent=indent_level*3, name=op_name);
+   }
+
+   pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
+      match self {
+         Self::Complement => write!(text, "\tnotl\t"),
+         Self::Negate => write!(text, "\tnegl\t"),
+      }
    }
 }
 
@@ -357,8 +376,10 @@ impl Operand {
             };
             write!(text, "{}", reg_name)?;
          },
-         Operand::PseudoReg(_) => (),
-         Operand::Stack(_) => (),
+         Operand::Stack(s) => {
+            write!(text, "{}(%rbp)", s)?;
+         },
+         _ => ()
       }
 
       Ok(())
