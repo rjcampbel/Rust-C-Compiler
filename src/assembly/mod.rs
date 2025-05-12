@@ -1,14 +1,14 @@
 pub mod at;
 
 use at::Program;
-use crate::parser::ast;
+use crate::tacky::tacky_ast;
 
 pub struct AssemblyGen {
-   program: ast::Program
+   program: tacky_ast::Program
 }
 
 impl AssemblyGen {
-   pub fn new(program_: ast::Program) -> Self {
+   pub fn new(program_: tacky_ast::Program) -> Self {
       Self {
          program: program_
       }

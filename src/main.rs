@@ -38,19 +38,19 @@ fn main() -> Result<(), Box<dyn Error>> {
                 let tacky_program = tacky_ast::Program::parse(&program)?;
                 tacky_program.pretty_print();
             }
-            if args.command.run_codegen {
-                let at_program: at::Program;
-                at_program = AssemblyGen::new(program).parse()?;
-                at_program.pretty_print();
+            // if args.command.run_codegen {
+            //     let at_program: at::Program;
+            //     at_program = AssemblyGen::new(program).parse()?;
+            //     at_program.pretty_print();
 
-                let path: String = args.file.replace(".c", ".s");
-                let mut code = File::create(&path)?;
-                at_program.write(&mut code)?;
+            //     let path: String = args.file.replace(".c", ".s");
+            //     let mut code = File::create(&path)?;
+            //     at_program.write(&mut code)?;
 
-                if args.command.run_assembler {
-                    Assembler::new(&path).process()?;
-                }
-            }
+            //     if args.command.run_assembler {
+            //         Assembler::new(&path).process()?;
+            //     }
+            // }
         }
     }
 

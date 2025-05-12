@@ -1,7 +1,7 @@
 use std::fs;
 use std::io::Write;
 
-use crate::parser::ast;
+use crate::tacky::tacky_ast;
 
 pub enum Program {
    Program(FuncDef)
@@ -18,10 +18,10 @@ impl Program {
       println!(")");
    }
 
-   pub fn parse(program: &ast::Program) -> Result<Self, String> {
+   pub fn parse(program: &tacky_ast::Program) -> Result<Self, String> {
       let function_def: FuncDef;
       match program {
-         ast::Program::Program(func_def) => {
+         tacky_ast::Program::Program(func_def) => {
             function_def = FuncDef::parse(func_def)?;
          }
       }
@@ -68,22 +68,46 @@ impl Function {
       Ok(())
    }
 
-   pub fn parse(function: &ast::Function) -> Result<Self, String> {
-      let mut at_func: Function = Function::new(&function.name);
+   pub fn parse(function: &tacky_ast::Function) -> Result<Self, String> {
+      let mut at_func: Function = Function::new(&function.identifier);
 
-      match &function.stmt {
-         ast::Stmt::Return(expr) => {
-            match expr {
-               ast::Expr::Const(c) => {
-                  at_func.instrs.push(Inst::Mov(Mov{src:Operand::Imm(*c), dst:Operand::Register}));
-                  at_func.instrs.push(Inst::Ret);
-               },
-               ast::Expr::Unary(op ) => {
-
-               },
-               ast::Expr::Expr(expr) => {
-
-               }
+      for instr in &function.instrs {
+         match instr {
+            tacky_ast::Instr::Return(v) => {
+               let operand = match &v {
+                  tacky_ast::Val::Constant(c) => {
+                     Operand::Imm(*c)
+                  },
+                  tacky_ast::Val::Var(var) => {
+                     Operand::PseudoReg(var.to_string())
+                  }
+               };
+               at_func.instrs.push(Inst::Mov(Mov{src:operand, dst:Operand::Register(Reg::AX)}));
+               at_func.instrs.push(Inst::Ret);
+            },
+            tacky_ast::Instr::Unary(op ) => {
+               let src = match &op.src {
+                  tacky_ast::Val::Constant(c) => {
+                     Operand::Imm(*c)
+                  },
+                  tacky_ast::Val::Var(v) => {
+                     Operand::PseudoReg(v.to_string())
+                  },
+               };
+               let dst = match &op.dst {
+                  tacky_ast::Val::Constant(c) => {
+                     Operand::Imm(*c)
+                  },
+                  tacky_ast::Val::Var(v) => {
+                     Operand::PseudoReg(v.to_string())
+                  }
+               };
+               let op = match op.op {
+                  tacky_ast::UnaryOp::Complement => UnaryOp::Complement,
+                  tacky_ast::UnaryOp::Negate => UnaryOp::Negate
+               };
+               at_func.instrs.push(Inst::Mov(Mov{src, dst:dst.clone()}));
+               at_func.instrs.push(Inst::Unary(op, dst.clone()));
             }
          }
       }
@@ -105,10 +129,10 @@ impl FuncDef {
       println!("{:indent$})", "", indent=indent_level*3);
    }
 
-   pub fn parse(func_def: &ast::FuncDef) -> Result<Self, String> {
+   pub fn parse(func_def: &tacky_ast::FuncDef) -> Result<Self, String> {
       let at_func: Function;
       match func_def {
-         ast::FuncDef::Function(function) => {
+         tacky_ast::FuncDef::Function(function) => {
             at_func = Function::parse(&function)?;
          }
       }
@@ -143,7 +167,14 @@ impl Mov {
 
 pub enum Inst {
    Mov(Mov),
+   Unary(UnaryOp, Operand),
+   AllocStack(u64),
    Ret
+}
+
+pub enum UnaryOp {
+   Negate,
+   Complement,
 }
 
 impl Inst {
@@ -155,7 +186,8 @@ impl Inst {
          },
          Inst::Ret => {
             println!("{:indent$}Ret", "", indent=indent_level*3);
-         }
+         },
+         _ => ()
       }
    }
 
@@ -170,15 +202,19 @@ impl Inst {
          },
          Inst::Ret => {
             writeln!(text, "   ret")?;
-         }
+         },
+         _ => ()
       }
       Ok(())
    }
 }
 
+#[derive(Clone)]
 pub enum Operand {
    Imm(u64),
-   Register
+   Register(Reg),
+   PseudoReg(String),
+   Stack(u64)
 }
 
 impl Operand {
@@ -187,8 +223,18 @@ impl Operand {
          Operand::Imm(v) => {
             println!("{:indent$}Imm({v})", "", indent=indent_level*3, v=v);
          },
-         Operand::Register => {
-            println!("{:indent$}Register", "", indent=indent_level*3);
+         Operand::Register(r) => {
+            let reg_name = match r {
+               Reg::AX => "AX",
+               Reg::R10 => "R10"
+            };
+            println!("{:indent$}Register({reg})", "", indent=indent_level*3, reg=reg_name);
+         },
+         Operand::PseudoReg(n) => {
+            println!("{:indent$}PseudoReg({reg})", "", indent=indent_level*3, reg=n);
+         },
+         Operand::Stack(s) => {
+            println!("{:indent$}Stack({bytes})", "", indent=indent_level*3, bytes=s);
          }
       }
    }
@@ -198,11 +244,23 @@ impl Operand {
          Operand::Imm(v) => {
             write!(text, "${}", v)?;
          },
-         Operand::Register => {
-            write!(text, "%eax")?;
-         }
+         Operand::Register(r) => {
+            let reg_name = match r {
+               Reg::AX => "%eax",
+               Reg::R10 => "%r10d",
+            };
+            write!(text, "{}", reg_name)?;
+         },
+         Operand::PseudoReg(_) => (),
+         Operand::Stack(_) => (),
       }
 
       Ok(())
    }
+}
+
+#[derive(Clone)]
+pub enum Reg {
+   AX,
+   R10,
 }
