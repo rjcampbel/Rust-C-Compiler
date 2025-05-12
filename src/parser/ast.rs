@@ -170,7 +170,7 @@ impl Expr {
          },
          Some(Token::Negate) => {
             let expr = Expr::parse(token_stream)?;
-            Ok(Expr::Unary(Box::new(UnaryOp::Complement(expr))))
+            Ok(Expr::Unary(Box::new(UnaryOp::Negate(expr))))
          }
          Some(Token::OpenParen) => {
             let expr = Expr::parse(token_stream)?;
