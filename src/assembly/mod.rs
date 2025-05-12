@@ -1,4 +1,5 @@
 pub mod at;
+pub mod stack_allocator;
 
 use at::Program;
 use crate::tacky::tacky_ast;
@@ -15,6 +16,8 @@ impl AssemblyGen {
    }
 
    pub fn parse(&mut self) -> Result<Program, String> {
-      Program::parse(&self.program)
+      let mut program = Program::parse(&self.program)?;
+      program.replace_pseudoregs();
+      Ok(program)
    }
 }

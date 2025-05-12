@@ -96,8 +96,8 @@ impl Function {
             let dest_name: String = self.make_temporary();
             let dst = Val::Var(dest_name);
             let tacky_op =  match &**u {
-               ast::UnaryOp::Complement(e) => UnaryOp::Complement,
-               ast::UnaryOp::Negate(e) => UnaryOp::Negate
+               ast::UnaryOp::Complement(_) => UnaryOp::Complement,
+               ast::UnaryOp::Negate(_) => UnaryOp::Negate
             };
             self.instrs.push(Instr::Unary(Unary { op:tacky_op, src, dst: dst.clone() }));
             return Ok(dst);

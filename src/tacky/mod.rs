@@ -2,7 +2,7 @@ pub mod tacky_ast;
 
 use crate::parser::ast;
 
-struct Tacky {
+pub struct Tacky {
    ast: ast::Program
 }
 
@@ -13,7 +13,8 @@ impl Tacky {
       }
    }
 
-   pub fn generate() -> Result<tacky_ast::Program, String> {
-      Err(String::from("not yet implemented"))
+   pub fn generate(&mut self) -> Result<tacky_ast::Program, String> {
+      let tacky_ast = tacky_ast::Program::parse(&self.ast)?;
+      Ok(tacky_ast)
    }
 }

@@ -1,7 +1,7 @@
 use std::fs;
 use std::io::Write;
-
 use crate::tacky::tacky_ast;
+use super::stack_allocator::StackAllocator;
 
 pub enum Program {
    Program(FuncDef)
@@ -28,6 +28,14 @@ impl Program {
       Ok(Program::Program(function_def))
    }
 
+   pub fn replace_pseudoregs(&mut self) {
+      match self {
+         Program::Program(f) => {
+            f.replace_pseudoregs();
+         }
+      }
+   }
+
    pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
       match self {
          Program::Program(p) => {
@@ -40,14 +48,16 @@ impl Program {
 
 pub struct Function {
    name: String,
-   instrs: Vec<Inst>
+   instrs: Vec<Inst>,
+   stack_allocator: StackAllocator
 }
 
 impl Function {
    pub fn new(name_: &String) -> Self {
       Function {
          name: name_.to_string(),
-         instrs: Vec::new()
+         instrs: Vec::new(),
+         stack_allocator: StackAllocator::new()
       }
    }
 
@@ -114,6 +124,36 @@ impl Function {
 
       Ok(at_func)
    }
+
+   pub fn replace_pseudoregs(&mut self) {
+      for instr in &mut self.instrs {
+         match instr {
+            Inst::Mov(m) => {
+               match &m.src {
+                  Operand::PseudoReg(p) => {
+                     m.src = Operand::Stack(self.stack_allocator.allocate(p.to_string(), 4));
+                  },
+                  _ => ()
+               }
+               match &m.dst {
+                  Operand::PseudoReg(p) => {
+                     m.dst = Operand::Stack(self.stack_allocator.allocate(p.to_string(), 4));
+                  },
+                  _ => ()
+               }
+            },
+            Inst::Unary(_, operand) => {
+               match &operand {
+                  Operand::PseudoReg(p) => {
+                     *operand = Operand::Stack(self.stack_allocator.allocate(p.to_string(), 4));
+                  },
+                  _ => ()
+               }
+            },
+            _ => ()
+         }
+      }
+   }
 }
 
 pub enum FuncDef {
@@ -137,6 +177,14 @@ impl FuncDef {
          }
       }
       Ok(FuncDef::Function(at_func))
+   }
+
+   pub fn replace_pseudoregs(&mut self) {
+      match self {
+         FuncDef::Function(f) => {
+            f.replace_pseudoregs();
+         }
+      }
    }
 
    pub fn write(&self, text: &mut fs::File) -> std::io::Result<()> {
@@ -172,22 +220,26 @@ pub enum Inst {
    Ret
 }
 
-pub enum UnaryOp {
-   Negate,
-   Complement,
-}
-
 impl Inst {
    pub fn pretty_print(&self, indent_level: usize) {
       match self {
          Inst::Mov(m) => {
             println!("{:indent$}Mov(", "", indent=indent_level*3);
             m.pretty_print(indent_level+1);
+            println!("{:indent$})", "", indent=indent_level*3);
          },
          Inst::Ret => {
             println!("{:indent$}Ret", "", indent=indent_level*3);
          },
-         _ => ()
+         Inst::AllocStack(a) => {
+            println!("{:indent$}Alloc({bytes})", "", indent=indent_level*3, bytes=a);
+         },
+         Inst::Unary(op, operand) => {
+            println!("{:indent$}Unary(", "", indent=indent_level*3);
+            op.pretty_print(indent_level+1);
+            operand.pretty_print(indent_level+1);
+            println!("{:indent$})", "", indent=indent_level*3);
+         }
       }
    }
 
@@ -209,12 +261,27 @@ impl Inst {
    }
 }
 
+pub enum UnaryOp {
+   Negate,
+   Complement,
+}
+
+impl UnaryOp {
+   pub fn pretty_print(&self, indent_level: usize) {
+      let op_name = match self {
+         Self::Complement => "Complement",
+         Self::Negate => "Negate"
+      };
+      println!("{:indent$}{name}", "", indent=indent_level*3, name=op_name);
+   }
+}
+
 #[derive(Clone)]
 pub enum Operand {
    Imm(u64),
    Register(Reg),
    PseudoReg(String),
-   Stack(u64)
+   Stack(i64),
 }
 
 impl Operand {
