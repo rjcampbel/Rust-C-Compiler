@@ -24,6 +24,10 @@ impl Lexer {
             '{' => tokens.push(Token::OpenBrace),
             '}' => tokens.push(Token::CloseBrace),
             '~' => tokens.push(Token::BitFlip),
+            '+' => tokens.push(Token::Plus),
+            '*' => tokens.push(Token::Asterisk),
+            '/' => tokens.push(Token::ForwardSlash),
+            '%' => tokens.push(Token::Percent),
             '-' => {
                if matches!(chars.peek(), Some('-')) {
                   chars.next();

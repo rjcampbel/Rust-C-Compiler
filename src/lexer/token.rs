@@ -13,4 +13,8 @@ pub enum Token {
     Negate,
     BitFlip,
     Decrement,
+    Plus,
+    Asterisk,
+    ForwardSlash,
+    Percent,
 }
