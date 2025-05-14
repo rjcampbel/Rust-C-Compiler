@@ -138,9 +138,18 @@ impl UnaryOp {
    }
 }
 
+pub enum BinaryOp {
+   Add(Expr, Expr),
+   Subtract(Expr, Expr),
+   Multiply(Expr, Expr),
+   Divide(Expr, Expr),
+   Remainder(Expr, Expr),
+}
+
 pub enum Expr {
    Const(u64),
    Unary(Box<UnaryOp>),
+   Binary(Box<BinaryOp>),
    Expr(Box<Expr>)
 }
 
@@ -155,7 +164,8 @@ impl Expr {
          },
          Self::Expr(expr) => {
             expr.pretty_print(indent_level);
-         }
+         },
+         Self::Binary(binop ) => ()
       }
    }
 
