@@ -21,7 +21,7 @@ impl Preprocessor {
       }
    }
 
-   pub fn process(&mut self) -> Result<String, io::Error> {
+   pub fn process(&self) -> Result<String, io::Error> {
       let _ = Command::new("gcc")
           .arg("-E")
           .arg("-P")
