@@ -104,6 +104,9 @@ impl Function {
          },
          ast::Expr::Expr(e) => {
             return self.parse_expression(&**e);
+         },
+         ast::Expr::Binary(_) => {
+            return Err(String::from("not yet impld"));
          }
       }
    }
